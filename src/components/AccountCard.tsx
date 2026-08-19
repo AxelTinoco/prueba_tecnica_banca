@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Brand, Spacing } from '@/constants/theme';
 import type { Account } from '@/models/Account';
@@ -38,11 +38,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: Spacing.four,
     gap: Spacing.one,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    ...Platform.select({
+      web: { boxShadow: '0 6px 12px rgba(0, 0, 0, 0.18)' },
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.18,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 4,
+      },
+    }),
   },
   cardPressed: {
     backgroundColor: Brand.bluePressed,

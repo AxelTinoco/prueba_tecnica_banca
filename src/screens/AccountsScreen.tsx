@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,37 +11,56 @@ import type { Account } from '@/models/Account';
 
 export default function AccountsScreen() {
   const { accounts, loading, refreshing, error, refetch } = useAccounts();
+  const router = useRouter();
 
   const handlePress = (account: Account) => {
-    console.log('cuenta seleccionada', account.id);
+    router.push({
+      pathname: '/accounts/[id]',
+      params: {
+        id: account.id,
+        number: account.number,
+        type: account.type,
+        balance: account.balance,
+      },
+    });
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.centered}>
-        <ActivityIndicator size="large" color={Brand.blue} />
-        <ThemedText type="small" themeColor="textSecondary">
-          Cargando tus cuentas…
-        </ThemedText>
-      </ThemedView>
-    );
-  }
+  const renderEmpty = () => {
+    if (loading) {
+      return (
+        <View style={styles.placeholder}>
+          <ActivityIndicator size="large" color={Brand.blue} />
+          <ThemedText type="small" themeColor="textSecondary">
+            Cargando tus cuentas…
+          </ThemedText>
+        </View>
+      );
+    }
 
-  if (error && accounts.length === 0) {
+    if (error) {
+      return (
+        <View style={styles.placeholder}>
+          <ThemedText type="default" style={styles.errorText}>
+            {error}
+          </ThemedText>
+          <Pressable
+            onPress={refetch}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.retry, pressed && styles.retryPressed]}>
+            <Text style={styles.retryLabel}>Reintentar</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
     return (
-      <ThemedView style={styles.centered}>
-        <ThemedText type="default" style={styles.errorText}>
-          {error}
+      <View style={styles.placeholder}>
+        <ThemedText type="default" themeColor="textSecondary" style={styles.errorText}>
+          Todavía no tienes cuentas registradas.
         </ThemedText>
-        <Pressable
-          onPress={refetch}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.retry, pressed && styles.retryPressed]}>
-          <Text style={styles.retryLabel}>Reintentar</Text>
-        </Pressable>
-      </ThemedView>
+      </View>
     );
-  }
+  };
 
   return (
     <ThemedView style={styles.screen}>
@@ -49,7 +69,7 @@ export default function AccountsScreen() {
           data={accounts}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => <AccountCard account={item} onPress={handlePress} />}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, accounts.length === 0 && styles.listGrow]}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor={Brand.blue} />
@@ -62,11 +82,7 @@ export default function AccountsScreen() {
               </ThemedText>
             </View>
           }
-          ListEmptyComponent={
-            <ThemedText type="default" themeColor="textSecondary" style={styles.empty}>
-              Todavía no tienes cuentas registradas.
-            </ThemedText>
-          }
+          ListEmptyComponent={renderEmpty}
         />
       </SafeAreaView>
     </ThemedView>
@@ -83,16 +99,12 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.three,
-    padding: Spacing.four,
-  },
   list: {
     padding: Spacing.three,
     paddingBottom: Spacing.five,
+  },
+  listGrow: {
+    flexGrow: 1,
   },
   header: {
     gap: Spacing.one,
@@ -101,9 +113,12 @@ const styles = StyleSheet.create({
   separator: {
     height: Spacing.three,
   },
-  empty: {
-    textAlign: 'center',
-    marginTop: Spacing.five,
+  placeholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.three,
+    paddingBottom: Spacing.six,
   },
   errorText: {
     textAlign: 'center',
