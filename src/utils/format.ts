@@ -1,0 +1,10 @@
+export function formatCurrency(value: number) {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(value);
+}
+
+export function maskAccountNumber(number: string) {
+  return `•••• ${number.slice(-4)}`;
+}
